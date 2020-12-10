@@ -2,7 +2,6 @@ from typing import List, Tuple, NamedTuple
 import socket
 import ssl
 import re
-import functools
 
 
 class Url:
@@ -37,7 +36,7 @@ class Page:
         self.meta = meta
         self.body = body
 
-    @functools.cached_property
+    @property
     def title(self) -> str:
         title_pattern = re.compile("#\s*(.*)")
 
@@ -50,7 +49,7 @@ class Page:
 
         return str(self.url.hostname)
 
-    @functools.cached_property
+    @property
     def links(self) -> List[GemtextLink]:
         url_pattern = re.compile( # Three groups: protocol, url, date, text
             "=>\s+" # => 
