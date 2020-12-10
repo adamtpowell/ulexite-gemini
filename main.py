@@ -1,72 +1,86 @@
-from typing import List, Tuple
-import socket
-import ssl
+from collections import defaultdict
+from typing import List, Tuple, NamedTuple, DefaultDict, Dict
+import gemini
+import sys
 import re
 
-class GemUrl:
-    def __init__(self, hostname: str, path: str):
-        self.hostname = hostname
-        self.path = path
+FeedEntry = NamedTuple("FeedEntry", [
+    ('feed_title', str),
+    ('link', gemini.GemtextLink),
+    ('date', str),
+])
 
-    @staticmethod
-    def from_str(url: str):
-        try:
-            hostname, path = re.match("gemini://([^/]*)(/.*)?", url).groups()
-            if path == None: path = ""
-        except:
-            raise ValueError("Malformed URL ", url)
+def read_feed(page: gemini.Page) -> List[FeedEntry]:
+    entries: List[FeedEntry] = []
+    feed_title = page.title
 
-        return GemUrl(hostname, path)
+    date_regex = re.compile("([0-9]{4}-[0-9]{2}-[0-9]{2})?\s*(.*)?")
 
-    def __repr__(self):
-        return "gemini://" + self.hostname + self.path
+    for link in page.links:
+        date_match = date_regex.match(link.label)
+        if date_match is None:
+            continue
 
-# Gets a raw response from the server.
-# Does not handle response codes
-def get_response(url: GemUrl) -> Tuple[int, str, List[str]]:
-    context = ssl.create_default_context()
+        date, new_label = date_match.groups()
 
-    print("Fetching", str(url))
+        if date is None:
+            continue
 
-    with socket.create_connection((url.hostname, 1965)) as sock:
-        with ssl.wrap_socket(sock) as secure_socket: # TODO: ssl.wrap_socket is deprecated. find other way of working with self signed certs
-            req = str(url) + "\r\n"
-            secure_socket.send(req.encode('utf-8'))
+        entries.append(FeedEntry(
+            feed_title, 
+            gemini.GemtextLink(
+                link.url,
+                new_label
+            ),
+            date
+        ))
 
-            response = ""
+    return entries
 
-            while True:
-                data = secure_socket.recv(16)
-                if not data: break
-                response += data.decode('utf-8')
+def feed_output(followed_feeds: List[gemini.Page], updates_by_date: Dict[str, List[FeedEntry]]) -> str:
+    follows = "\n".join("=> {} {}".format(feed.url, feed.title) for feed in followed_feeds)
 
-            lines = response.splitlines()
-            header = lines[0]
-            body = lines[1:]
-
-            response_code = int(header[0:2])
-            meta = header[3:]
+    updates = ""
+    for date in updates_by_date.keys():
+        updates += "### {}".format(date)
+        updates += "\n\n"
+        for entry in updates_by_date[date]:
+            updates += "=> {} {} | {}".format(entry.link.url, entry.feed_title, entry.link.label)
+            updates += "\n"
+        updates += "\n"
     
-    return (response_code, meta, body)
+    result = """# {title}
 
-# Handle response codes
-def get_page(url: GemUrl):
-    success = True
-    while True:
-        response = get_response(url)
-        status = response[0] // 10
-        if status == 3: # Redirect
-            print("Redirected to:", response[1])
-            url = GemUrl.from_str(response[1]) # Url is given in META
-            continue # Try again
+## Follows
 
-        if status != 2: # Failure / requires input / client cert needed
-            print("Got failure code", response[0])
-            success = False
+{follows}
+
+## Updates
+
+{updates}""".format(
+        title = "Uxelite",
+        follows = follows,
+        updates = updates
+    )
+    
+    return result
+
+if __name__ == "__main__":
+    feed_updates: DefaultDict[str, List[FeedEntry]] = defaultdict(list)
+    followed_feeds: List[gemini.Page] = []
+
+    with open(sys.argv[1]) as feed_file:
+        feed_urls = feed_file.readlines()
+
+    for feed_url in feed_urls:
+        page = gemini.fetch_page(gemini.Url.from_str(feed_url))
+        followed_feeds.append(page)
+
+        entries = read_feed(page)
+        for feed_entry in entries:
+            feed_updates[feed_entry.date].append(feed_entry)
+    
+    with open(sys.argv[2], "w") as out_file:
+        out_file.write(feed_output(followed_feeds, feed_updates))
+
             
-        break
-    
-    if not success:
-        print("Page load failed:", response[0], response[1])
-    else:
-        print(response)

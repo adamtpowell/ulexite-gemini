@@ -1,0 +1,5 @@
+feeds.txt
+output.gmi
+.vscode
+.mypy_cache
+__pycache__
