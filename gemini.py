@@ -5,23 +5,24 @@ import re
 
 
 class Url:
-    def __init__(self, hostname: str, port: int, path: str):
+    def __init__(self, protocol: str, hostname: str, port: int, path: str):
         self.hostname = hostname
+        self.protocol = protocol
         self.port = 1965 if port is None else int(port)
         self.path = path
 
     @staticmethod
     def from_str(url: str):
         try:
-            hostname, port, path = re.match("gemini://([^/^:]*):?([0-9]+)?(/.*)?", url).groups()
+            protocol, hostname, port, path = re.match("(.*)://([^/^:]*):?([0-9]+)?(/.*)?", url).groups()
             if path == None: path = ""
         except:
             raise ValueError("Malformed URL ", url)
 
-        return Url(hostname, port, path)
+        return Url(protocol, hostname, port, path)
 
     def __repr__(self):
-        return "gemini://{}:{}{}".format(self.hostname, self.port, self.path)
+        return "{}://{}:{}{}".format(self.protocol,self.hostname, self.port, self.path)
 
 GemtextLink = NamedTuple("GemtextLink", [
     ('url', Url),
