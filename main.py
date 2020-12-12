@@ -41,7 +41,7 @@ def feed_output(followed_feeds: List[gemini.Page], updates_by_date: Dict[str, Li
     follows = "\n".join("=> {} {}".format(feed.url, feed.title) for feed in followed_feeds)
 
     updates = ""
-    for date in updates_by_date.keys():
+    for date in sorted(updates_by_date.keys(), reverse=True):
         updates += "### {}".format(date)
         updates += "\n\n"
         for entry in updates_by_date[date]:

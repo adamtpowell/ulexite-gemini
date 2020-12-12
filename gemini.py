@@ -2,7 +2,7 @@ from typing import List, Tuple, NamedTuple
 import socket
 import ssl
 import re
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlsplit, urlunsplit
 
 
 class Url:
@@ -20,7 +20,26 @@ class Url:
         except:
             raise ValueError("Malformed URL ", url)
 
-        return Url(protocol, hostname, port, path)
+        if port == None:
+            port = 1965
+
+        return Url(protocol, hostname, int(port), path)
+
+    # Append a relative url as str
+    def with_relative(self, relative: str):
+
+        try:
+            return Url.from_str(relative)
+        except:
+            pass # If you can't make the url from the relative string (that is, it is actually relative), continue
+
+        split = urlsplit(str(self))
+        with_http = urlunsplit(("http", split[1], split[2], split[3], split[4])) # Ugly hack to make url join work
+        res_with_http = urljoin(with_http, relative)
+        with_http_split = urlsplit(res_with_http)
+        with_gemini = urlunsplit(("gemini", with_http_split[1], with_http_split[2], with_http_split[3], with_http_split[4]))
+        return Url.from_str(with_gemini)
+
 
     def __repr__(self):
         return "{}://{}:{}{}".format(self.protocol,self.hostname, self.port, self.path)
@@ -54,8 +73,7 @@ class Page:
     def links(self) -> List[GemtextLink]:
         url_pattern = re.compile( # Three groups: protocol, url, date, text
             "=>\s+" # => 
-            "(gemini://|http://|https://|finger://|gopher://)?" # Protocol
-            "([^\s]*)" # URL (continues until first whitespace)
+            "((?:gemini://|http://|https://|finger://|gopher://)?[^\s]*)" # URL (continues until first whitespace)
             "\s*" # URL is seperated from title by arbitrary whitespace
             "(.*)" # title is the rest of the line
         )
@@ -64,13 +82,9 @@ class Page:
             if line[0:2] != "=>":
                 continue # ignore lines which aren't links
 
-            link_protocol, link_url, link_text = url_pattern.match(line).groups()
+            link_url, link_text = url_pattern.match(line).groups()
 
-            # Create a fully qualified link from the fragments
-            # This is WRONG but works for now, TODO: read RFC
-            link = urljoin(str(self.url), link_url)
-
-            link = Url.from_str(link)
+            link = self.url.with_relative(link_url)
 
             links.append(GemtextLink(link, link_text))
         
