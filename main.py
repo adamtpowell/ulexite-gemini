@@ -76,8 +76,7 @@ if __name__ == "__main__":
         try:
             page = gemini.fetch_page(gemini.Url.from_str(feed_url))
         except Exception as e:
-            print("Failure fetching feed", str(feed_url), file=sys.stderr)
-            print(e, file=sys.stderr)
+            print("Failure fetching feed", str(feed_url), ":", e, file=sys.stderr)
             continue # Just skip this url and you should be fine
         followed_feeds.append(page)
 
