@@ -14,7 +14,6 @@ class Url:
     def from_str(url: str):
         try:
             hostname, port, path = re.match("gemini://([^/^:]*):?([0-9]+)?(/.*)?", url).groups()
-            print(hostname, port, path)
             if path == None: path = ""
         except:
             raise ValueError("Malformed URL ", url)
