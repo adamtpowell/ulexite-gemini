@@ -73,7 +73,12 @@ if __name__ == "__main__":
         feed_urls = feed_file.readlines()
 
     for feed_url in feed_urls:
-        page = gemini.fetch_page(gemini.Url.from_str(feed_url))
+        try:
+            page = gemini.fetch_page(gemini.Url.from_str(feed_url))
+        except Exception as e:
+            print("Failure fetching feed", str(feed_url))
+            print(e)
+            continue # Just skip this url and you should be fine
         followed_feeds.append(page)
 
         entries = read_feed(page)
