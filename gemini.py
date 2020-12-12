@@ -68,8 +68,8 @@ class Page:
             # Create a fully qualified link from the fragments
             # This is WRONG but works for now, TODO: read RFC
             if link_protocol == None:
-                if link_url[0] == "/": # Relative link
-                    link = str(self.url) + link_url
+                if link_url[0] != "/": # Relative link
+                    link = str(self.url) + "/" + link_url
                 else: # Absolute link
                     link = "{}://{}:{}/{}".format(self.url.protocol, self.url.hostname, self.url.port, link_url)
             else:
