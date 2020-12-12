@@ -88,7 +88,7 @@ def _fetch_response(url: Url) -> Page:
 
     # TODO: Vectorpoems site doesn't work...
     with socket.create_connection((url.hostname, 1965), 2) as sock:
-        with context.wrap_socket(sock) as secure_socket: # it fails here with errno 0 which is strange
+        with context.wrap_socket(sock, server_hostname=url.hostname) as secure_socket: # it fails here with errno 0 which is strange
             request = str(url) + "\r\n"
             secure_socket.send(request.encode('utf-8'))
 
