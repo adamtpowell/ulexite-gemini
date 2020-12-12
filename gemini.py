@@ -82,7 +82,7 @@ class Page:
 # Gets a raw response from the server.
 # Does not handle response codes
 def _fetch_response(url: Url) -> Page:
-    context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
+    context = ssl.SSLContext()
     context.verify_mode = ssl.CERT_NONE
     context.check_hostname = False
 
