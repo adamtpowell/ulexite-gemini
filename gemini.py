@@ -68,7 +68,10 @@ class Page:
             # Create a fully qualified link from the fragments
             # This is WRONG but works for now, TODO: read RFC
             if link_protocol == None:
-                link = str(self.url) + link_url
+                if link_url[0] == "/": # Relative link
+                    link = str(self.url) + link_url
+                else: # Absolute link
+                    link = "{}://{}:{}/{}".format(self.url.protocol, self.url.hostname, self.url.port, link_url)
             else:
                 link = link_protocol + link_url
 
@@ -86,9 +89,8 @@ def _fetch_response(url: Url) -> Page:
     context.verify_mode = ssl.CERT_NONE
     context.check_hostname = False
 
-    # TODO: Vectorpoems site doesn't work...
     with socket.create_connection((url.hostname, 1965), 2) as sock:
-        with context.wrap_socket(sock, server_hostname=url.hostname) as secure_socket: # it fails here with errno 0 which is strange
+        with context.wrap_socket(sock, server_hostname=url.hostname) as secure_socket: # server_hostname is required or else internal ssl error
             request = str(url) + "\r\n"
             secure_socket.send(request.encode('utf-8'))
 
