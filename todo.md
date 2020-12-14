@@ -1,15 +1,18 @@
 # TODO
 
-[] Fix vectorpoem error
-[] tests
 [] More feed options (detected automatically)
     [] Atom
     [] Date tites (multiple formats)
     [] Page changes
         [] Add sqlite database for keeping track of feed info
-[] ...Correctly... make URLS fully qualified if they are not already.
-    [] Read RFC
 [] Package
+[] Tests
+[x] Handle header and footer
+[x] stdin and stdout
+[x] Command line help
+[x] ...Correctly... make URLS fully qualified if they are not already.
+    [x] Read RFC
+[x] Fix vectorpoem error
 [x] limit redirect depth
 [x] refactor feed generation
 [x] handle ports

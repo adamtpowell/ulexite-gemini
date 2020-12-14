@@ -1,5 +1,7 @@
 feeds.txt
 output.gmi
+header.gmi
+footer.gmi
 .vscode
 .mypy_cache
 __pycache__

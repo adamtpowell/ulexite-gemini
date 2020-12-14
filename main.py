@@ -3,6 +3,7 @@ from typing import List, Tuple, NamedTuple, DefaultDict, Dict
 import gemini
 import sys
 import re
+import argparse
 
 FeedEntry = NamedTuple("FeedEntry", [
     ('feed_title', str),
@@ -37,40 +38,21 @@ def read_feed(page: gemini.Page) -> List[FeedEntry]:
 
     return entries
 
-def feed_output(followed_feeds: List[gemini.Page], updates_by_date: Dict[str, List[FeedEntry]]) -> str:
-    follows = "\n".join("=> {} {}".format(feed.url, feed.title) for feed in followed_feeds)
+def get_feed_list(updates_by_date: Dict[str, List[FeedEntry]]) -> str:
 
     updates = ""
     for date in sorted(updates_by_date.keys(), reverse=True):
-        updates += "### {}".format(date)
-        updates += "\n\n"
         for entry in updates_by_date[date]:
-            updates += "=> {} {} | {}".format(entry.link.url, entry.feed_title, entry.link.label)
+            updates += "=> {} {} {} | {}".format(entry.link.url, date, entry.feed_title, entry.link.label)
             updates += "\n"
         updates += "\n"
     
-    result = """# {title}
+    return updates
 
-## Follows
-
-{follows}
-
-## Updates
-
-{updates}""".format(
-        title = "Uxelite",
-        follows = follows,
-        updates = updates
-    )
-    
-    return result
-
-if __name__ == "__main__":
+def write_feed(input_file, output_file, header_file, footer_file):
     feed_updates: DefaultDict[str, List[FeedEntry]] = defaultdict(list)
-    followed_feeds: List[gemini.Page] = []
 
-    with open(sys.argv[1]) as feed_file:
-        feed_urls = feed_file.readlines()
+    feed_urls = input_file.readlines()
 
     for feed_url in feed_urls:
         try:
@@ -78,13 +60,66 @@ if __name__ == "__main__":
         except Exception as e:
             print("Failure fetching feed", str(feed_url), ":", e, file=sys.stderr)
             continue # Just skip this url and you should be fine
-        followed_feeds.append(page)
 
         entries = read_feed(page)
         for feed_entry in entries:
             feed_updates[feed_entry.date].append(feed_entry)
-    
-    with open(sys.argv[2], "w") as out_file:
-        out_file.write(feed_output(followed_feeds, feed_updates))
 
-            
+    header_value = "" if header_file == None else "".join(header_file.readlines())
+    footer_value = "" if footer_file == None else "".join(footer_file.readlines())
+
+    output_file.write(header_value)
+    output_file.write(get_feed_list(feed_updates))
+    output_file.write(footer_value)
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Generate gemini feed')
+    parser.add_argument('--feeds',
+                    help='The path of the feed list. Should be a plain text file with a list of feed URLS. If "-" is passed, or no value is passed, uses stdin.')
+    parser.add_argument('--output',
+                    help='The path of the output file. If "-" is passed, or no value is passed, uses stdout.')
+    parser.add_argument('--header', default=None,
+                    help='The file path of the header (file prepended to the feed list)')
+    parser.add_argument('--footer', default=None,
+                    help='The file path of the footer (file appended to the feed list)')
+
+    args = parser.parse_args()
+
+    input_file = sys.stdin
+    output_file = sys.stdout
+    header_file = None
+    footer_file = None
+
+    if not args.feeds is None and not args.feeds == "-":
+        try: 
+            input_file = open(args.feeds) 
+        except: 
+            print("Failed to open feeds file {}. Make sure the file exists.".format(args.feeds), file=sys.stderr)
+            exit()
+
+    if not args.output is None and not args.output == "-":
+        try:
+            output_file = open(args.output, "w")
+        except:
+            print("Failed to open output file {}. Make sure the path is writable.".format(args.output), file=sys.stderr)
+            exit()
+
+    if not args.header is None:
+        try:
+            header_file = open(args.header)
+        except:
+            print("Failed to open header file {}. Make sure the file exists and is readable".format(args.header), file=sys.stderr)
+
+    if not args.footer is None:
+        try:
+            footer_file = open(args.footer)
+        except:
+            print("Failed to open footer file {}. Make sure the file exists and is readable".format(args.header), file=sys.stderr)
+
+    write_feed(input_file, output_file, header_file, footer_file)
+
+    input_file.close()
+    output_file.close()
+    if not header_file is None: header_file.close()
+    if not footer_file is None: footer_file.close()
+    
