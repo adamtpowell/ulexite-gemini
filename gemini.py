@@ -44,10 +44,37 @@ class Url:
     def __repr__(self):
         return "{}://{}:{}{}".format(self.protocol,self.hostname, self.port, self.path)
 
-GemtextLink = NamedTuple("GemtextLink", [
-    ('url', Url),
-    ('label', str)
-])
+class GemtextLink:
+    def __init__(self, url: Url, label: str):
+        self.url = url
+        self.label = label
+
+    @staticmethod
+    def from_str(link_line: str, base_url: Url = None):
+        link_pattern = re.compile(
+            "=>\s+"
+            "([^\s]*)" # URL contains anything but whitespace
+            "\s*"
+            "(.*)"
+        )
+
+        matches = link_pattern.match(link_line)
+
+        if matches is None:
+            return None
+
+        partial_url = matches.group(1)
+        link_name = matches.group(2)
+
+        if not base_url is None:
+            full_url = base_url.with_relative(partial_url)
+        else:
+            full_url = Url.from_str(partial_url)
+
+        return GemtextLink(
+            full_url,
+            link_name
+        )
 
 class Page:
     def __init__(self, url: Url, status: int, meta: str, body: List[str]):
@@ -65,28 +92,23 @@ class Page:
                 continue
 
             if (line[0] == "#"):
-                return title_pattern.match(line).group(1) or str(self.url)
+                match = title_pattern.match(line)
+                if not match is None:
+                    return match.group(1) or str(self.url)
 
         return str(self.url.hostname)
 
     @property
     def links(self) -> List[GemtextLink]:
-        url_pattern = re.compile( # Three groups: protocol, url, date, text
-            "=>\s+" # => 
-            "((?:gemini://|http://|https://|finger://|gopher://)?[^\s]*)" # URL (continues until first whitespace)
-            "\s*" # URL is seperated from title by arbitrary whitespace
-            "(.*)" # title is the rest of the line
-        )
         links: List[GemtextLink] = []
         for line in self.body: # Read links
             if line[0:2] != "=>":
-                continue # ignore lines which aren't links
+                continue # ignore lines which aren't links to speed things up.
 
-            link_url, link_text = url_pattern.match(line).groups()
+            link = GemtextLink.from_str(line, base_url = self.url) # If its a non-fully qualifed url, use self.url as the base
 
-            link = self.url.with_relative(link_url)
-
-            links.append(GemtextLink(link, link_text))
+            if not link is None:
+                links.append(link)
         
         return links
     
@@ -110,9 +132,7 @@ def _fetch_response(url: Url) -> Page:
                 if not data: break
                 response += data
 
-    response = response.decode("utf-8")
-
-    lines = response.splitlines()
+    lines = response.decode("utf-8").splitlines()
     header = lines[0]
     body = lines[1:]
 

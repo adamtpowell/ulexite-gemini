@@ -52,9 +52,9 @@ def get_feed_list(updates_by_date: Dict[str, List[FeedEntry]]) -> str:
 def write_feed(input_file, output_file, header_file, footer_file):
     feed_updates: DefaultDict[str, List[FeedEntry]] = defaultdict(list)
 
-    feed_urls = input_file.readlines()
+    feed_links = input_file.readlines()
 
-    for feed_url in feed_urls:
+    for feed_url in feed_links:
         try:
             page = gemini.fetch_page(gemini.Url.from_str(feed_url))
         except Exception as e:
