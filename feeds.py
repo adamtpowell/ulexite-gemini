@@ -3,16 +3,9 @@ from typing import NamedTuple, List
 import gemini
 import re
 
-FeedEntry = NamedTuple("FeedEntry", [
-    ('feed_title', str),
-    ('post_title', str),
-    ('url', gemini.Url),
-    ('date', str),
-])
-
 class Feed:
-    def __init__(self, feed_title: str, entries: List[FeedEntry]):
-        self.feed_title = feed_title
+    def __init__(self, title: str, entries: List['FeedEntry']):
+        self.title = title
         self.entries = entries
 
     @staticmethod
@@ -20,6 +13,11 @@ class Feed:
         entries: List[FeedEntry] = []
 
         feed_title = page.title if title is None else title
+
+        new_feed = Feed(
+            feed_title,
+            entries
+        )
 
         date_re = re.compile("([0-9]{4}-[0-9]{2}-[0-9]{2})?\s*(.*)?")
 
@@ -38,14 +36,18 @@ class Feed:
             # Many feeds use a seperator character between the date and the text. Remove it.
             label_without_date = seperator_removal_re.sub("", label_without_date)
 
-            entries.append(FeedEntry(
-                feed_title,
+            new_feed.entries.append(FeedEntry(
+                new_feed,
                 label_without_date,
                 link.url,
                 date
             ))
 
-        return Feed(
-            feed_title,
-            entries
-        )
+        return new_feed
+
+FeedEntry = NamedTuple("FeedEntry", [
+    ('feed', Feed),
+    ('post_title', str),
+    ('url', gemini.Url),
+    ('date', str),
+])

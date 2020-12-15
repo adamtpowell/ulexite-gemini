@@ -1,8 +1,7 @@
 from collections import defaultdict
-from typing import List, Tuple, NamedTuple, DefaultDict, Dict, Optional
+from typing import List, DefaultDict, Optional
 import gemini
 import sys
-import re
 import argparse
 from multiprocessing import Pool
 from datetime import datetime
@@ -35,7 +34,7 @@ def write_body(input_file, output_file, header_file, footer_file):
     feed_list = ""
     for date in sorted(feed_updates_by_date.keys(), reverse=True):
         for entry in feed_updates_by_date[date]:
-            feed_list += "=> {} {} {} | {}".format(entry.url, date, entry.feed_title, entry.post_title)
+            feed_list += "=> {} {} {} | {}".format(entry.url, date, entry.feed.title, entry.post_title)
             feed_list += "\n"
         feed_list += "\n"
 
