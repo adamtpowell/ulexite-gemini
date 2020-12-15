@@ -4,6 +4,7 @@ import gemini
 import sys
 import re
 import argparse
+from multiprocessing import Pool
 
 FeedEntry = NamedTuple("FeedEntry", [
     ('feed_title', str),
@@ -49,18 +50,23 @@ def get_feed_list(updates_by_date: Dict[str, List[FeedEntry]]) -> str:
     
     return updates
 
+def page_from_url(feed_url: gemini.Url):
+    try:
+        return gemini.fetch_page(feed_url)
+    except Exception as e:
+        print("Failure fetching feed", str(feed_url), ":", e, file=sys.stderr)
+        return None
+
 def write_feed(input_file, output_file, header_file, footer_file):
     feed_updates: DefaultDict[str, List[FeedEntry]] = defaultdict(list)
 
-    feed_links = input_file.readlines()
+    feed_urls = [gemini.Url.from_str(line) for line in input_file.readlines()]
 
-    for feed_url in feed_links:
-        try:
-            page = gemini.fetch_page(gemini.Url.from_str(feed_url))
-        except Exception as e:
-            print("Failure fetching feed", str(feed_url), ":", e, file=sys.stderr)
-            continue # Just skip this url and you should be fine
+    with Pool(processes = 16) as pool:
+        pages = pool.map(page_from_url, feed_urls)
 
+    for page in pages:
+        if page is None: continue # Ignore pages which failed to parse
         entries = read_feed(page)
         for feed_entry in entries:
             feed_updates[feed_entry.date].append(feed_entry)
@@ -71,6 +77,8 @@ def write_feed(input_file, output_file, header_file, footer_file):
     output_file.write(header_value)
     output_file.write(get_feed_list(feed_updates))
     output_file.write(footer_value)
+
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Generate gemini feed')
