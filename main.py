@@ -5,6 +5,7 @@ import sys
 import re
 import argparse
 from multiprocessing import Pool
+from datetime import datetime
 
 FeedEntry = NamedTuple("FeedEntry", [
     ('feed_title', str),
@@ -20,7 +21,7 @@ def get_entries_from_page(page: gemini.Page, title: str) -> List[FeedEntry]:
 
     date_re = re.compile("([0-9]{4}-[0-9]{2}-[0-9]{2})?\s*(.*)?")
 
-    seperator_removal_re = re.compile("\s*[-=|]\s+") # Matches seperator between date and text.
+    seperator_removal_re = re.compile("\s*[-=|~:]+\s+") # Matches seperator between date and text.
 
     for link in page.links:
         if link.label is None: continue # Link cannot have date if it has no label
@@ -82,7 +83,12 @@ def write_feed(input_file, output_file, header_file, footer_file):
     header_value = "" if header_file == None else "".join(header_file.readlines())
     footer_value = "" if footer_file == None else "".join(footer_file.readlines())
 
+    today_utc = datetime.utcnow().isoformat(sep=" ",timespec="minutes")
+
     output_file.write(header_value)
+
+    output_file.write("Last fetched on {} utc\n\n".format(today_utc))
+
     output_file.write(feed_list)
     output_file.write(footer_value)
 
