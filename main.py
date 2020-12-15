@@ -45,15 +45,6 @@ def get_entries_from_page(page: gemini.Page, title: str) -> List[FeedEntry]:
 
     return entries
 
-def get_feed_list(updates_by_date: Dict[str, List[FeedEntry]]) -> str:
-    updates = ""
-    for date in sorted(updates_by_date.keys(), reverse=True):
-        for entry in updates_by_date[date]:
-            updates += "=> {} {} {} | {}".format(entry.url, date, entry.feed_title, entry.post_title)
-            updates += "\n"
-        updates += "\n"
-    
-    return updates
 
 def page_with_title_from_url(feed_link: gemini.GemtextLink):
     try:
@@ -62,13 +53,14 @@ def page_with_title_from_url(feed_link: gemini.GemtextLink):
         print("Failure fetching feed at", str(feed_link.url), ":", e, file=sys.stderr)
         return None
 
-def write_feed(input_file, output_file, header_file, footer_file):
-    feed_updates_by_date: DefaultDict[str, List[FeedEntry]] = defaultdict(list)
+def write_body(input_file, output_file, header_file, footer_file):
 
     links_to_feeds = [gemini.GemtextLink.from_str(line) for line in input_file.readlines()]
 
     with Pool(processes = 16) as pool:
         pages = pool.map(page_with_title_from_url, links_to_feeds)
+   
+    feed_updates_by_date: DefaultDict[str, List[FeedEntry]] = defaultdict(list)
 
     for page_with_title in filter(lambda pages: not pages is None, pages):
         page, title = page_with_title
@@ -78,7 +70,13 @@ def write_feed(input_file, output_file, header_file, footer_file):
         for feed_entry in entries:
             feed_updates_by_date[feed_entry.date].append(feed_entry)
 
-    feed_list = get_feed_list(feed_updates_by_date)
+    # Build the list of feeds given the updates by date.
+    feed_list = ""
+    for date in sorted(feed_updates_by_date.keys(), reverse=True):
+        for entry in feed_updates_by_date[date]:
+            feed_list += "=> {} {} {} | {}".format(entry.url, date, entry.feed_title, entry.post_title)
+            feed_list += "\n"
+        feed_list += "\n"
 
     header_value = "" if header_file == None else "".join(header_file.readlines())
     footer_value = "" if footer_file == None else "".join(footer_file.readlines())
@@ -138,7 +136,7 @@ if __name__ == "__main__":
         except:
             print("Failed to open footer file {}. Make sure the file exists and is readable".format(args.header), file=sys.stderr)
 
-    write_feed(input_file, output_file, header_file, footer_file)
+    write_body(input_file, output_file, header_file, footer_file)
 
     input_file.close()
     output_file.close()

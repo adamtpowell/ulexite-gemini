@@ -7,8 +7,7 @@
         [] Add sqlite database for keeping track of feed info
 [] Package
 [] Tests
-[] Add updated time to start of feeds
-[] Limit How far back to go
+[x] Add updated time to start of feeds
 [x] Get rid of seperator characters at the start of feed entry names
 [x] Use gemlink for feeds.txt. Get feed title from this.
 [x] Handle header and footer
