@@ -8,7 +8,8 @@
 [] Package
 [] Tests
 [] Add updated time to start of feeds
-[] Use gemlink for feeds.txt. Get feed title from this.
+[] Get rid of seperator characters at the start of feed entry names
+[x] Use gemlink for feeds.txt. Get feed title from this.
 [x] Handle header and footer
 [x] stdin and stdout
 [x] Command line help

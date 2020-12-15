@@ -1,4 +1,4 @@
-from typing import List, Tuple, NamedTuple
+from typing import List, Tuple, NamedTuple, Optional
 import socket
 import ssl
 import re
@@ -45,7 +45,7 @@ class Url:
         return "{}://{}:{}{}".format(self.protocol,self.hostname, self.port, self.path)
 
 class GemtextLink:
-    def __init__(self, url: Url, label: str):
+    def __init__(self, url: Url, label: Optional[str]):
         self.url = url
         self.label = label
 
@@ -64,7 +64,10 @@ class GemtextLink:
             return None
 
         partial_url = matches.group(1)
-        link_name = matches.group(2)
+        link_name: Optional[str] = matches.group(2)
+
+        if link_name == "":
+            link_name = None
 
         if not base_url is None:
             full_url = base_url.with_relative(partial_url)

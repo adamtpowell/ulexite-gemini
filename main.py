@@ -12,9 +12,10 @@ FeedEntry = NamedTuple("FeedEntry", [
     ('date', str),
 ])
 
-def read_feed(page: gemini.Page) -> List[FeedEntry]:
+def read_feed(page: gemini.Page, title: str) -> List[FeedEntry]:
     entries: List[FeedEntry] = []
-    feed_title = page.title
+
+    feed_title = page.title if title is None else title
 
     date_regex = re.compile("([0-9]{4}-[0-9]{2}-[0-9]{2})?\s*(.*)?")
 
@@ -50,24 +51,25 @@ def get_feed_list(updates_by_date: Dict[str, List[FeedEntry]]) -> str:
     
     return updates
 
-def page_from_url(feed_url: gemini.Url):
+def page_with_title_from_url(feed_link: gemini.GemtextLink):
     try:
-        return gemini.fetch_page(feed_url)
+        return (gemini.fetch_page(feed_link.url), feed_link.label)
     except Exception as e:
-        print("Failure fetching feed", str(feed_url), ":", e, file=sys.stderr)
+        print("Failure fetching feed at", str(feed_link.url), ":", e, file=sys.stderr)
         return None
 
 def write_feed(input_file, output_file, header_file, footer_file):
     feed_updates: DefaultDict[str, List[FeedEntry]] = defaultdict(list)
 
-    feed_urls = [gemini.Url.from_str(line) for line in input_file.readlines()]
+    links_to_feeds = [gemini.GemtextLink.from_str(line) for line in input_file.readlines()]
 
     with Pool(processes = 16) as pool:
-        pages = pool.map(page_from_url, feed_urls)
+        pages = pool.map(page_with_title_from_url, links_to_feeds)
 
-    for page in pages:
-        if page is None: continue # Ignore pages which failed to parse
-        entries = read_feed(page)
+    for page_with_title in pages:
+        if page_with_title is None: continue # Ignore pages which failed to parse
+        page, title = page_with_title
+        entries = read_feed(page, title)
         for feed_entry in entries:
             feed_updates[feed_entry.date].append(feed_entry)
 
@@ -81,9 +83,9 @@ def write_feed(input_file, output_file, header_file, footer_file):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Generate gemini feed')
+    parser = argparse.ArgumentParser(description='Read gemini feeds and generate gemtext from them.')
     parser.add_argument('--feeds',
-                    help='The path of the feed list. Should be a plain text file with a list of feed URLS. If "-" is passed, or no value is passed, uses stdin.')
+                    help='The path of the feed list. Should be a gemtext file with only link lines. The label is optional and is used for the feed title. If "-" is passed, or no value is passed, uses stdin.')
     parser.add_argument('--output',
                     help='The path of the output file. If "-" is passed, or no value is passed, uses stdout.')
     parser.add_argument('--header', default=None,
