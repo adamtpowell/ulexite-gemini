@@ -16,6 +16,7 @@ def feed_from_link(feed_link: gemini.GemtextLink) -> Optional[Feed]:
         print("Failure fetching feed at", str(feed_link.url), ":", e, file=sys.stderr)
         return None
 
+
 def write_body(input_file, output_file, header_file, footer_file):
 
     links_to_feeds = [gemini.GemtextLink.from_str(line) for line in input_file.readlines()]
@@ -49,7 +50,6 @@ def write_body(input_file, output_file, header_file, footer_file):
 
     output_file.write(feed_list)
     output_file.write(footer_value)
-
 
 
 if __name__ == "__main__":
@@ -102,4 +102,3 @@ if __name__ == "__main__":
     output_file.close()
     if not header_file is None: header_file.close()
     if not footer_file is None: footer_file.close()
-    

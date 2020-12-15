@@ -8,6 +8,7 @@ class Feed:
         self.title = title
         self.entries = entries
 
+
     @staticmethod
     def from_page(page: gemini.Page, title: str = None):
         entries: List[FeedEntry] = []
@@ -44,6 +45,7 @@ class Feed:
             ))
 
         return new_feed
+
 
 FeedEntry = NamedTuple("FeedEntry", [
     ('feed', Feed),

@@ -4,6 +4,7 @@ import ssl
 import re
 from urllib.parse import urljoin, urlsplit, urlunsplit
 
+
 class Url:
     def __init__(self, protocol: str, hostname: str, port: int, path: str):
         self.hostname = hostname
@@ -12,6 +13,7 @@ class Url:
         self.path = path
 
     _url_re = re.compile("(.*)://([^/^:]*):?([0-9]+)?(/.*)?") # Compile this for the from_str method
+
 
     @staticmethod
     def from_str(url: str):
@@ -28,6 +30,7 @@ class Url:
             port = int(port_str)
 
         return Url(protocol, hostname, int(port), path)
+
 
     # Append a relative url as str
     def with_relative(self, relative: str):
@@ -48,10 +51,12 @@ class Url:
     def __repr__(self):
         return "{}://{}:{}{}".format(self.protocol,self.hostname, self.port, self.path)
 
+
 class GemtextLink:
     def __init__(self, url: Url, label: Optional[str]):
         self.url = url
         self.label = label
+
 
     @staticmethod
     def from_str(link_line: str, base_url: Url = None):
@@ -83,12 +88,14 @@ class GemtextLink:
             link_name
         )
 
+
 class Page:
     def __init__(self, url: Url, status: int, meta: str, body: List[str]):
         self.url = url
         self.status = status
         self.meta = meta
         self.body = body
+
 
     @property
     def title(self) -> str:
@@ -104,6 +111,7 @@ class Page:
                     return match.group(1) or str(self.url)
 
         return str(self.url.hostname)
+
 
     @property
     def links(self) -> List[GemtextLink]:
@@ -147,6 +155,7 @@ def _fetch_response(url: Url) -> Page:
     meta = header[3:]
     
     return Page(url, response_code, meta, body)
+
 
 # Handle response codes
 def fetch_page(url: Url) -> Page:
