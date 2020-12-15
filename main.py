@@ -1,54 +1,18 @@
 from collections import defaultdict
-from typing import List, Tuple, NamedTuple, DefaultDict, Dict
+from typing import List, Tuple, NamedTuple, DefaultDict, Dict, Optional
 import gemini
 import sys
 import re
 import argparse
 from multiprocessing import Pool
 from datetime import datetime
-
-FeedEntry = NamedTuple("FeedEntry", [
-    ('feed_title', str),
-    ('post_title', str),
-    ('url', gemini.Url),
-    ('date', str),
-])
-
-def get_entries_from_page(page: gemini.Page, title: str) -> List[FeedEntry]:
-    entries: List[FeedEntry] = []
-
-    feed_title = page.title if title is None else title
-
-    date_re = re.compile("([0-9]{4}-[0-9]{2}-[0-9]{2})?\s*(.*)?")
-
-    seperator_removal_re = re.compile("\s*[-=|~:]+\s+") # Matches seperator between date and text.
-
-    for link in page.links:
-        if link.label is None: continue # Link cannot have date if it has no label
-        
-        date_match = date_re.match(link.label)
-        if date_match is None: continue
-
-        date, label_without_date = date_match.groups()
-
-        if date is None: continue
-
-        # Many feeds use a seperator character between the date and the text. Remove it.
-        label_without_date = seperator_removal_re.sub("", label_without_date)
-
-        entries.append(FeedEntry(
-            feed_title,
-            label_without_date,
-            link.url,
-            date
-        ))
-
-    return entries
+from feeds import FeedEntry, Feed
 
 
-def page_with_title_from_url(feed_link: gemini.GemtextLink):
+def feed_from_link(feed_link: gemini.GemtextLink) -> Optional[Feed]:
     try:
-        return (gemini.fetch_page(feed_link.url), feed_link.label)
+        page = gemini.fetch_page(feed_link.url)
+        return Feed.from_page(page, feed_link.label)
     except Exception as e:
         print("Failure fetching feed at", str(feed_link.url), ":", e, file=sys.stderr)
         return None
@@ -58,14 +22,13 @@ def write_body(input_file, output_file, header_file, footer_file):
     links_to_feeds = [gemini.GemtextLink.from_str(line) for line in input_file.readlines()]
 
     with Pool(processes = 16) as pool:
-        pages = pool.map(page_with_title_from_url, links_to_feeds)
+        feeds = pool.map(feed_from_link, links_to_feeds)
+        feeds = [feed for feed in feeds if not feed is None]
    
     feed_updates_by_date: DefaultDict[str, List[FeedEntry]] = defaultdict(list)
 
-    for page_with_title in filter(lambda pages: not pages is None, pages):
-        page, title = page_with_title
-        
-        entries = get_entries_from_page(page, title)
+    for feed in feeds:
+        entries = feed.entries
         
         for feed_entry in entries:
             feed_updates_by_date[feed_entry.date].append(feed_entry)
