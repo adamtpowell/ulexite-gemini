@@ -16,7 +16,7 @@ class Feed:
         self.entries = entries
 
     @staticmethod
-    def from_page(page: gemini.Page, title: str = None) -> Feed: # type: ignore
+    def from_page(page: gemini.Page, title: str = None):
         entries: List[FeedEntry] = []
 
         feed_title = page.title if title is None else title

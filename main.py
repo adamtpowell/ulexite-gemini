@@ -28,9 +28,7 @@ def write_body(input_file, output_file, header_file, footer_file):
     feed_updates_by_date: DefaultDict[str, List[FeedEntry]] = defaultdict(list)
 
     for feed in feeds:
-        entries = feed.entries
-        
-        for feed_entry in entries:
+        for feed_entry in feed.entries:
             feed_updates_by_date[feed_entry.date].append(feed_entry)
 
     # Build the list of feeds given the updates by date.

@@ -5,6 +5,7 @@
     [] Date tites (multiple formats)
     [] Page changes
         [] Add sqlite database for keeping track of feed info
+    [x] Refactor feeds to seperate class
 [] Package
 [] Tests
 [x] Add updated time to start of feeds

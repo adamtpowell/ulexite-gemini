@@ -4,7 +4,6 @@ import ssl
 import re
 from urllib.parse import urljoin, urlsplit, urlunsplit
 
-
 class Url:
     def __init__(self, protocol: str, hostname: str, port: int, path: str):
         self.hostname = hostname
