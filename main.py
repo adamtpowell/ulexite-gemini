@@ -20,14 +20,14 @@ def read_feed(page: gemini.Page, title: str) -> List[FeedEntry]:
     date_regex = re.compile("([0-9]{4}-[0-9]{2}-[0-9]{2})?\s*(.*)?")
 
     for link in page.links:
+        if link.label is None: continue
+        
         date_match = date_regex.match(link.label)
-        if date_match is None:
-            continue
+        if date_match is None: continue
 
         date, new_label = date_match.groups()
 
-        if date is None:
-            continue
+        if date is None: continue
 
         entries.append(FeedEntry(
             feed_title, 

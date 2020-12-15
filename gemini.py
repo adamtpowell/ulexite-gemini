@@ -12,16 +12,21 @@ class Url:
         self.port = 1965 if port is None else int(port)
         self.path = path
 
+    _url_re = re.compile("(.*)://([^/^:]*):?([0-9]+)?(/.*)?") # Compile this for the from_str method
+
     @staticmethod
     def from_str(url: str):
-        try:
-            protocol, hostname, port, path = re.match("(.*)://([^/^:]*):?([0-9]+)?(/.*)?", url).groups()
-            if path == None: path = ""
-        except:
+        match = Url._url_re.match(url)
+        if match is None:
             raise ValueError("Malformed URL ", url)
 
-        if port == None:
+        protocol, hostname, port_str, path = match.groups()
+        if path == None: path = ""
+            
+        if port_str == None:
             port = 1965
+        else:
+            port = int(port_str)
 
         return Url(protocol, hostname, int(port), path)
 
