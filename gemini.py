@@ -18,7 +18,7 @@ class Url:
     def from_str(url: str):
         match = Url._url_re.match(url)
         if match is None:
-            raise ValueError("Malformed URL ", url)
+            raise ValueError("Malformed URL ", url) 
 
         protocol, hostname, port_str, path = match.groups()
         if path == None: path = ""

@@ -8,44 +8,47 @@ from multiprocessing import Pool
 
 FeedEntry = NamedTuple("FeedEntry", [
     ('feed_title', str),
-    ('link', gemini.GemtextLink),
+    ('post_title', str),
+    ('url', gemini.Url),
     ('date', str),
 ])
 
-def read_feed(page: gemini.Page, title: str) -> List[FeedEntry]:
+def get_entries_from_page(page: gemini.Page, title: str) -> List[FeedEntry]:
     entries: List[FeedEntry] = []
 
     feed_title = page.title if title is None else title
 
-    date_regex = re.compile("([0-9]{4}-[0-9]{2}-[0-9]{2})?\s*(.*)?")
+    date_re = re.compile("([0-9]{4}-[0-9]{2}-[0-9]{2})?\s*(.*)?")
+
+    seperator_removal_re = re.compile("\s*[-=|]\s+") # Matches seperator between date and text.
 
     for link in page.links:
-        if link.label is None: continue
+        if link.label is None: continue # Link cannot have date if it has no label
         
-        date_match = date_regex.match(link.label)
+        date_match = date_re.match(link.label)
         if date_match is None: continue
 
-        date, new_label = date_match.groups()
+        date, label_without_date = date_match.groups()
 
         if date is None: continue
 
+        # Many feeds use a seperator character between the date and the text. Remove it.
+        label_without_date = seperator_removal_re.sub("", label_without_date)
+
         entries.append(FeedEntry(
-            feed_title, 
-            gemini.GemtextLink(
-                link.url,
-                new_label
-            ),
+            feed_title,
+            label_without_date,
+            link.url,
             date
         ))
 
     return entries
 
 def get_feed_list(updates_by_date: Dict[str, List[FeedEntry]]) -> str:
-
     updates = ""
     for date in sorted(updates_by_date.keys(), reverse=True):
         for entry in updates_by_date[date]:
-            updates += "=> {} {} {} | {}".format(entry.link.url, date, entry.feed_title, entry.link.label)
+            updates += "=> {} {} {} | {}".format(entry.url, date, entry.feed_title, entry.post_title)
             updates += "\n"
         updates += "\n"
     
@@ -59,25 +62,28 @@ def page_with_title_from_url(feed_link: gemini.GemtextLink):
         return None
 
 def write_feed(input_file, output_file, header_file, footer_file):
-    feed_updates: DefaultDict[str, List[FeedEntry]] = defaultdict(list)
+    feed_updates_by_date: DefaultDict[str, List[FeedEntry]] = defaultdict(list)
 
     links_to_feeds = [gemini.GemtextLink.from_str(line) for line in input_file.readlines()]
 
     with Pool(processes = 16) as pool:
         pages = pool.map(page_with_title_from_url, links_to_feeds)
 
-    for page_with_title in pages:
-        if page_with_title is None: continue # Ignore pages which failed to parse
+    for page_with_title in filter(lambda pages: not pages is None, pages):
         page, title = page_with_title
-        entries = read_feed(page, title)
+        
+        entries = get_entries_from_page(page, title)
+        
         for feed_entry in entries:
-            feed_updates[feed_entry.date].append(feed_entry)
+            feed_updates_by_date[feed_entry.date].append(feed_entry)
+
+    feed_list = get_feed_list(feed_updates_by_date)
 
     header_value = "" if header_file == None else "".join(header_file.readlines())
     footer_value = "" if footer_file == None else "".join(footer_file.readlines())
 
     output_file.write(header_value)
-    output_file.write(get_feed_list(feed_updates))
+    output_file.write(feed_list)
     output_file.write(footer_value)
 
 
