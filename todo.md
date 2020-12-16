@@ -2,7 +2,6 @@
 
 [] More feed options (detected automatically)
     [] Atom
-    [] Date tites (multiple formats)
     [] Page changes
         [] Add sqlite database for keeping track of feed info
     [x] Refactor feeds to seperate class
