@@ -46,6 +46,8 @@ class Feed:
 
         return new_feed
 
+    
+
 
 FeedEntry = NamedTuple("FeedEntry", [
     ('feed', Feed),

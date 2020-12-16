@@ -6,3 +6,4 @@ footer.gmi
 .mypy_cache
 __pycache__
 out
+.venv
