@@ -34,7 +34,7 @@ class Feed:
         feed_title = title or "TODO: Find title"
 
         new_feed = Feed(
-            feed_title,
+            feed_title + " (Atom Feed)",
             entries
         )
 
@@ -52,7 +52,7 @@ class Feed:
 
             new_feed.entries.append(FeedEntry(
                 new_feed, # Feed backlink
-                title + "ATOM", # Title
+                title, # Title
                 link.url, # URL
                 date_text # Date
             ))
