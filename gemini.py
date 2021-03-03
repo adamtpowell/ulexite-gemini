@@ -33,6 +33,7 @@ class Url:
 
 
     # Append a relative url as str
+    # Bad an hacky since python Url doesn't support different protocols?
     def with_relative(self, relative: str):
 
         try:
