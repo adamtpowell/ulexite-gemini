@@ -21,8 +21,6 @@ class Feed:
 
             return Feed.from_atom_root(root, title)
         except Exception as e:
-            # We silently fail parsing as an atom feed. The fallback is to try other methods
-            print(e)
             pass
         
         # If the feed is not an atom feed, then try to pull a gemfeed from it
@@ -54,9 +52,9 @@ class Feed:
 
             new_feed.entries.append(FeedEntry(
                 new_feed, # Feed backlink
-                title.strip(), # Title
+                title + "ATOM", # Title
                 link.url, # URL
-                date_text.strip() # Date
+                date_text # Date
             ))
 
         return new_feed
