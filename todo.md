@@ -1,7 +1,7 @@
 # TODO
 
 [] More feed options (detected automatically)
-    [] Atom
+    [x] Atom
     [] Page changes
         [] Add sqlite database for keeping track of feed info
     [x] Refactor feeds to seperate class
