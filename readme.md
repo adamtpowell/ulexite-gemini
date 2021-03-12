@@ -1,6 +1,6 @@
 # Ulexite
 
-Ulexite is a Gemini Feed reader (LINK TO SPEC) written in Python 3. It is designed to have full and optimal support for all gemini feeds / gemlogs in the wild, and to be as simple as possible to deploy and run.
+Ulexite is a feed reader for the gemini:// protocol, support gemfeed (list of links with ISO dates), and atom feeds, with support for more on the way. It's usable in its current state, but there are probably better options.
 
 ## Usage
 
