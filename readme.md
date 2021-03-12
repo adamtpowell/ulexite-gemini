@@ -1,6 +1,6 @@
 # Ulexite
 
-Ulexite is a feed reader for the gemini:// protocol, support gemfeed (list of links with ISO dates), and atom feeds, with support for more on the way. It's usable in its current state, but there are probably better options.
+Ulexite is a feed reader for the gemini:// protocol, supporting gemfeed (list of links with ISO dates), and atom feeds, with support for more on the way. It's usable in its current state, but there are probably better options.
 
 ## Usage
 
