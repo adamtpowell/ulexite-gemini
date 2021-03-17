@@ -18,20 +18,27 @@ class Feed:
             root: ElementTree = ElementTree.fromstring("".join(page.body))
             if root.tag != "{http://www.w3.org/2005/Atom}feed":
                 raise ValueError("Not an atom feed")
-
+            print(page.body)
             return Feed.from_atom_root(root, title)
-        except Exception as e:
+        except:
             pass
         
-        # If the feed is not an atom feed, then try to pull a gemfeed from it
-        return Feed.from_page_gemfeed(page, title)
+        try:
+            # If the feed is not an atom feed, then try to pull a gemfeed from it
+            return Feed.from_page_gemfeed(page, title)
+        except:
+            pass
+
+        raise ValueError("page is not a valid feed (atom or gemfeed)")
 
 
     # Create a Feed from an ElementTree
     @staticmethod
     def from_atom_root(root: ElementTree, title: str = None) -> 'Feed':
         entries: List['FeedEntry'] = []
-        feed_title = title or "TODO: Find title"
+
+        title_element = root.find("{http://www.w3.org/2005/Atom}title")
+        feed_title = title or title_element.text
 
         new_feed = Feed(
             feed_title + " (Atom Feed)",
