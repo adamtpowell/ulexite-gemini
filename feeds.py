@@ -18,7 +18,7 @@ class Feed:
             root: ElementTree = ElementTree.fromstring("".join(page.body))
             if root.tag != "{http://www.w3.org/2005/Atom}feed":
                 raise ValueError("Not an atom feed")
-            print(page.body)
+
             return Feed.from_atom_root(root, title)
         except:
             pass
